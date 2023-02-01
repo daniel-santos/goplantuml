@@ -10,7 +10,6 @@ call the Render() function and this will return a string with the class diagram.
 
 See github.com/jfeliu007/goplantuml/cmd/goplantuml/main.go for a command that uses this functions and outputs the text to
 the console.
-
 */
 package parser
 
@@ -221,17 +220,19 @@ func (p *ClassParser) parsePackage(node ast.Node) {
 	for fileName := range pack.Files {
 		sortedFiles = append(sortedFiles, fileName)
 	}
+
 	sort.Strings(sortedFiles)
 	for _, fileName := range sortedFiles {
+		if strings.HasSuffix(fileName, "_test.go") {
+			continue
+		}
 
-		if !strings.HasSuffix(fileName, "_test.go") {
-			f := pack.Files[fileName]
-			for _, d := range f.Imports {
-				p.parseImports(d)
-			}
-			for _, d := range f.Decls {
-				p.parseFileDeclarations(d)
-			}
+		f := pack.Files[fileName]
+		for _, d := range f.Imports {
+			p.parseImports(d)
+		}
+		for _, d := range f.Decls {
+			p.parseFileDeclarations(d)
 		}
 	}
 }
@@ -267,7 +268,6 @@ func (p *ClassParser) parseFileDeclarations(node ast.Decl) {
 }
 
 func (p *ClassParser) handleFuncDecl(decl *ast.FuncDecl) {
-
 	if decl.Recv != nil {
 		if decl.Recv.List == nil {
 			return
@@ -315,13 +315,11 @@ func handleGenDecInterfaceType(p *ClassParser, typeName string, c *ast.Interface
 		switch t := f.Type.(type) {
 		case *ast.FuncType:
 			p.getOrCreateStruct(typeName).AddMethod(f, p.allImports)
-			break
 		case *ast.Ident:
 			f, _ := getFieldType(t, p.allImports)
 			st := p.getOrCreateStruct(typeName)
 			f = replacePackageConstant(f, st.PackageName)
 			st.AddToComposition(f)
-			break
 		}
 	}
 }
@@ -387,7 +385,6 @@ func (p *ClassParser) processSpec(spec ast.Spec) {
 			p.allRenamedStructs[pack[0]][renamedClass] = pack[1]
 		}
 	}
-	return
 }
 
 // If this element is an array or a pointer, this function will return the type that is closer to these
@@ -473,7 +470,7 @@ func (p *ClassParser) renderStructures(pack string, structures map[string]*Struc
 			str.WriteLineWithDepth(2, aliasComplexNameComment)
 			str.WriteLineWithDepth(1, "}")
 		}
-		str.WriteLineWithDepth(0, fmt.Sprintf(`}`))
+		str.WriteLineWithDepth(0, `}`)
 		if p.renderingOptions.Compositions {
 			str.WriteLineWithDepth(0, composition.String())
 		}
@@ -487,7 +484,6 @@ func (p *ClassParser) renderStructures(pack string, structures map[string]*Struc
 }
 
 func (p *ClassParser) renderAliases(str *LineStringBuilder) {
-
 	aliasString := ""
 	if p.renderingOptions.ConnectionLabels {
 		aliasString = aliasOf
@@ -513,7 +509,6 @@ func (p *ClassParser) renderAliases(str *LineStringBuilder) {
 }
 
 func (p *ClassParser) renderStructure(structure *Struct, pack string, name string, str *LineStringBuilder, composition *LineStringBuilder, extends *LineStringBuilder, aggregations *LineStringBuilder) {
-
 	privateFields := &LineStringBuilder{}
 	publicFields := &LineStringBuilder{}
 	privateMethods := &LineStringBuilder{}
@@ -561,7 +556,7 @@ func (p *ClassParser) renderStructure(structure *Struct, pack string, name strin
 	if publicMethods.Len() > 0 {
 		str.WriteLineWithDepth(0, publicMethods.String())
 	}
-	str.WriteLineWithDepth(1, fmt.Sprintf(`}`))
+	str.WriteLineWithDepth(1, `}`)
 }
 
 func (p *ClassParser) renderCompositions(structure *Struct, name string, composition *LineStringBuilder) {
@@ -585,7 +580,6 @@ func (p *ClassParser) renderCompositions(structure *Struct, name string, composi
 }
 
 func (p *ClassParser) renderAggregations(structure *Struct, name string, aggregations *LineStringBuilder) {
-
 	aggregationMap := structure.Aggregations
 	if p.renderingOptions.AggregatePrivateMembers {
 		p.updatePrivateAggregations(structure, aggregationMap)
@@ -594,7 +588,6 @@ func (p *ClassParser) renderAggregations(structure *Struct, name string, aggrega
 }
 
 func (p *ClassParser) updatePrivateAggregations(structure *Struct, aggregationsMap map[string]struct{}) {
-
 	for agg := range structure.PrivateAggregations {
 		aggregationsMap[agg] = struct{}{}
 	}
@@ -623,13 +616,13 @@ func (p *ClassParser) renderAggregationMap(aggregationMap map[string]struct{}, s
 }
 
 func (p *ClassParser) getPackageName(t string, st *Struct) string {
-
 	packageName := st.PackageName
 	if isPrimitiveString(t) {
 		packageName = builtinPackageName
 	}
 	return packageName
 }
+
 func (p *ClassParser) renderExtends(structure *Struct, name string, extends *LineStringBuilder) {
 
 	orderedExtends := []string{}
@@ -651,7 +644,6 @@ func (p *ClassParser) renderExtends(structure *Struct, name string, extends *Lin
 }
 
 func (p *ClassParser) renderStructMethods(structure *Struct, privateMethods *LineStringBuilder, publicMethods *LineStringBuilder) {
-
 	for _, method := range structure.Functions {
 		accessModifier := "+"
 		if unicode.IsLower(rune(method.Name[0])) {
