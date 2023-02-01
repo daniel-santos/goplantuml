@@ -296,9 +296,17 @@ func (p *ClassParser) handleFuncDecl(decl *ast.FuncDecl) {
 	}
 }
 
-func handleGenDecStructType(p *ClassParser, typeName string, c *ast.StructType) {
+func handleGenDecStructType(p *ClassParser, typeName string, c *ast.StructType, typeParams *ast.FieldList) {
 	for _, f := range c.Fields.List {
 		p.getOrCreateStruct(typeName).AddField(f, p.allImports)
+	}
+
+	if typeParams == nil {
+		return
+	}
+
+	for _, tp := range typeParams.List {
+		p.getOrCreateStruct(typeName).AddTypeParam(tp)
 	}
 }
 
@@ -338,7 +346,7 @@ func (p *ClassParser) processSpec(spec ast.Spec) {
 		switch c := v.Type.(type) {
 		case *ast.StructType:
 			declarationType = "class"
-			handleGenDecStructType(p, typeName, c)
+			handleGenDecStructType(p, typeName, c, v.TypeParams)
 		case *ast.InterfaceType:
 			declarationType = "interface"
 			handleGenDecInterfaceType(p, typeName, c)
@@ -518,9 +526,24 @@ func (p *ClassParser) renderStructure(structure *Struct, pack string, name strin
 	case "alias":
 		sType = "<< (T, #FF7700) >> "
 		renderStructureType = "class"
-
 	}
-	str.WriteLineWithDepth(1, fmt.Sprintf(`%s %s %s {`, renderStructureType, name, sType))
+
+	types := ""
+	if structure.Generics.exists() {
+		types = "<"
+		for t := range structure.Generics.Types {
+			types += fmt.Sprintf("%s, ", t)
+		}
+		types = strings.TrimSuffix(types, ", ")
+		types += " constrains "
+		for _, n := range structure.Generics.Names {
+			types += fmt.Sprintf("%s, ", n)
+		}
+		types = strings.TrimSuffix(types, ", ")
+		types += ">"
+	}
+
+	str.WriteLineWithDepth(1, fmt.Sprintf(`%s %s%s %s {`, renderStructureType, name, types, sType))
 	p.renderStructFields(structure, privateFields, publicFields)
 	p.renderStructMethods(structure, privateMethods, publicMethods)
 	p.renderCompositions(structure, name, composition)
@@ -685,6 +708,7 @@ func (p *ClassParser) getOrCreateStruct(name string) *Struct {
 			Functions:           make([]*Function, 0),
 			Fields:              make([]*Field, 0),
 			Type:                "",
+			Generics:            NewGeneric(),
 			Composition:         make(map[string]struct{}, 0),
 			Extends:             make(map[string]struct{}, 0),
 			Aggregations:        make(map[string]struct{}, 0),

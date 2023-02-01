@@ -94,6 +94,7 @@ func TestGetOrCreateStruct(t *testing.T) {
 					Functions:           make([]*Function, 0),
 					Fields:              make([]*Field, 0),
 					Type:                "",
+					Generics:            NewGeneric(),
 					Composition:         make(map[string]struct{}, 0),
 					Extends:             make(map[string]struct{}, 0),
 					Aggregations:        make(map[string]struct{}, 0),
@@ -296,6 +297,7 @@ func getTestStruct() *Struct {
 				ReturnValues: []string{"int"},
 			},
 		},
+		Generics: NewGeneric(),
 	}
 }
 

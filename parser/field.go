@@ -40,12 +40,23 @@ func getFieldType(exp ast.Expr, aliases map[string]string) (string, []string) {
 		return getFuncType(v, aliases)
 	case *ast.Ellipsis:
 		return getEllipsis(v, aliases)
+	case *ast.IndexExpr:
+		return getIndexExpr(v, aliases)
+	case *ast.IndexListExpr:
+		return getIndexListExpr(v, aliases)
 	}
 	return "", []string{}
 }
 
-func getIdent(v *ast.Ident, aliases map[string]string) (string, []string) {
+func getIndexExpr(v *ast.IndexExpr, aliases map[string]string) (string, []string) {
+	return getFieldType(v.X, aliases)
+}
 
+func getIndexListExpr(v *ast.IndexListExpr, aliases map[string]string) (string, []string) {
+	return getFieldType(v.X, aliases)
+}
+
+func getIdent(v *ast.Ident, aliases map[string]string) (string, []string) {
 	if isPrimitive(v) {
 		return v.Name, []string{}
 	}

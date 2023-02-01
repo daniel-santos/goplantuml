@@ -12,6 +12,7 @@ type Struct struct {
 	Functions           []*Function
 	Fields              []*Field
 	Type                string
+	Generics            *Generic
 	Composition         map[string]struct{}
 	Extends             map[string]struct{}
 	Aggregations        map[string]struct{}
@@ -101,6 +102,10 @@ func (st *Struct) AddField(field *ast.Field, aliases map[string]string) {
 		}
 		st.AddToComposition(theType)
 	}
+}
+
+func (st *Struct) AddTypeParam(field *ast.Field) {
+	st.Generics.getNames(field).getTypes(field)
 }
 
 //AddMethod Parse the Field and if it is an ast.FuncType, then add the methods into the structure
